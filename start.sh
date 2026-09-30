@@ -1,12 +1,14 @@
 #!/bin/sh
 
-# Iniciar Tailscale en background sin requerir privilegios de red
+# Iniciar Tailscale en background en modo usuario
 tailscaled --tun=userspace-networking --socks5-server=localhost:1055 &
 sleep 5
 
-# Autenticarse usando la variable de entorno que pondremos en Railway
-tailscale up --authkey=${TS_AUTHKEY} --hostname=railway-test-web
+# Autenticar y ACEPTAR las rutas enviadas por el MikroTik (10.105.0.0/16)
+tailscale up --authkey=${TS_AUTHKEY} --hostname=railway-test-web --accept-routes
 
-# Iniciar Nginx en primer plano para que el contenedor no se apague
+# Exponer el puerto 80 de Nginx hacia la red de Tailscale
+tailscale serve --bg http://localhost:80
+
+# Iniciar Nginx
 nginx -g "daemon off;"
-
