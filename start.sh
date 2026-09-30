@@ -1,14 +1,17 @@
 #!/bin/sh
 
-# Iniciar Tailscale en background en modo usuario
+# 1. Iniciar Nginx primero en segundo plano para que el puerto 80 local ya esté abierto
+nginx
+
+# 2. Iniciar el demonio de Tailscale en modo userspace
 tailscaled --tun=userspace-networking --socks5-server=localhost:1055 &
-sleep 5
+sleep 3
 
-# Autenticar y ACEPTAR las rutas enviadas por el MikroTik (10.105.0.0/16)
-tailscale up --authkey=${TS_AUTHKEY} --hostname=railway-test-web --accept-routes
+# 3. Autenticar en Tailscale (efímero para autoremover la IP si Railway reinicia)
+tailscale up --authkey=${TS_AUTHKEY} --hostname=railway-web --accept-routes --ephemeral
 
-# Exponer el puerto 80 de Nginx hacia la red de Tailscale
-tailscale serve --bg http://localhost:80
+# 4. Enlazar el tráfico web de la VPN directamente al Nginx local
+tailscale serve --bg http://127.0.0.1:80
 
-# Iniciar Nginx
-nginx -g "daemon off;"
+# 5. Mantener el contenedor en ejecución
+sleep infinity
